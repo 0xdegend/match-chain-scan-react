@@ -91,14 +91,18 @@ const LiveData = () => {
     ],
   };
   const getGasPrice = async () => {
-    const eth_gasPrice_Data = await axios.get(
-      `https://api.etherscan.io/api?module=proxy&action=eth_gasPrice&apikey=${process.env.REACT_APP_API_KEY}`
-    );
-    const hexTodecimal = (hex) => parseInt(hex, 16);
-    gasPrice = hexTodecimal(eth_gasPrice_Data.data.result);
-    const gweiValue = ethers.utils.formatUnits(gasPrice, "gwei");
-    const roundedValue = Math.round(gweiValue);
-    setGasPrice(roundedValue);
+    try {
+      const eth_gasPrice_Data = await axios.get(
+        `https://api.etherscan.io/api?module=proxy&action=eth_gasPrice&apikey=${process.env.REACT_APP_API_KEY}`
+      );
+      const hexValue = eth_gasPrice_Data.data.result;
+      const gweiValue = ethers.utils.formatUnits(hexValue, "gwei");
+      const roundedValue = Math.round(Number(gweiValue));
+      setGasPrice(roundedValue);
+    } catch (e) {
+      console.error(e);
+      setGasPrice("N/A");
+    }
   };
   const getBlockNumber = async () => {
     const ethBlockNumber = await axios.get(
