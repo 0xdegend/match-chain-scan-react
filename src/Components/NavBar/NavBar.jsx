@@ -82,7 +82,13 @@ const NavBar = () => {
                 <a href="##" className="disconnect" onClick={logout}>
                   {user ? "Disconnect" : ""}
                 </a>
-                {user ? <></> : <button onClick={login}>Connect Wallet</button>}
+                {user ? (
+                  <></>
+                ) : (
+                  <button className="connect-button" onClick={login}>
+                    Connect Wallet
+                  </button>
+                )}
               </div>
             </li>
           </ul>
