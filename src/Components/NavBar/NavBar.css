@@ -66,6 +66,10 @@
   font-family: "Nanum Gothic Coding", sans-serif;
   font-size: 17px;
 }
+.connect-button:hover {
+  background: #e67600;
+  cursor: pointer;
+}
 @media (max-width: 600px) {
   .desktop {
     display: none;
