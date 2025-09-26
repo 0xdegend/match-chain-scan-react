@@ -25,8 +25,11 @@ const LiveBlock = () => {
       console.log(filteredList);
       if (filteredList === "Max rate limit reached") {
         alert("Max API Call/Sec limit reached");
-      } else {
+        setTranSactionLists([]);
+      } else if (Array.isArray(filteredList)) {
         setTranSactionLists(filteredList);
+      } else {
+        setTranSactionLists([]);
       }
       //setTranLists(tranLists);
       //console.log(JSON.parse(transactionstoredList));
@@ -52,7 +55,7 @@ const LiveBlock = () => {
           <hr className="latest-block-hr" />
           {tranSactionLists.length < 1
             ? "No Blocks Mined Yet"
-            : tranSactionLists.map((transactionList) => (
+            : tranSactionLists?.map((transactionList) => (
                 <div
                   className="blocks-details mined"
                   key={transactionList.blockNumber}
