@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import transactionImage from "../../Assets/images/icon_transaction.png";
 import blockImage from "../../Assets/images/icon_block.png";
 import axios from "axios";
@@ -7,42 +7,47 @@ import "./LiveBlock.css";
 import { ethers } from "ethers";
 
 const LiveBlock = () => {
-  let [tranSactionLists, setTranSactionLists] = useState([]);
-  let newWallet = localStorage.getItem("walletKey");
-  const getTranList = async () => {
+  const [tranSactionLists, setTranSactionLists] = useState([]);
+  const [walletKey, setWalletKey] = useState(localStorage.getItem("walletKey"));
+
+  const getTranList = useCallback(async (wallet) => {
+    if (!wallet) {
+      setTranSactionLists([]);
+      return;
+    }
     try {
-      let transactionList = await axios.get(
-        `https://api-sepolia.etherscan.io/api?module=account&action=txlist&address=${newWallet}&startblock=0&endblock=99999999&page=1&offset=5&sort=desc&apikey=${process.env.REACT_APP_API_KEY}`
+      let response = await axios.get(
+        `https://api-sepolia.etherscan.io/api?module=account&action=txlist&address=${wallet}&startblock=0&endblock=99999999&page=1&offset=5&sort=asc&apikey=${process.env.REACT_APP_API_KEY}`
       );
-      localStorage.setItem(
-        "transactionList",
-        JSON.stringify(transactionList.data.result)
-      );
-      const transactionstoredList = localStorage.getItem("transactionList");
-      const filteredList = JSON.parse(transactionstoredList);
-      tranSactionLists = transactionList.data.result;
-      //tranLists = filteredList;
-      console.log(filteredList);
-      if (filteredList === "Max rate limit reached") {
+      const data = response.data;
+      if (data.message && data.message.toLowerCase().includes("rate limit")) {
         alert("Max API Call/Sec limit reached");
         setTranSactionLists([]);
-      } else if (Array.isArray(filteredList)) {
-        setTranSactionLists(filteredList);
+        return;
+      }
+      if (Array.isArray(data.result)) {
+        setTranSactionLists(data.result);
       } else {
         setTranSactionLists([]);
       }
-      //setTranLists(tranLists);
-      //console.log(JSON.parse(transactionstoredList));
     } catch (e) {
       console.error(e.message);
+      setTranSactionLists([]);
     }
-  };
+  }, []);
+
   useEffect(() => {
-    if (newWallet) {
-      getTranList();
-    } else {
-      // alert("Kindly Connect your wallet and Switch to Sepolia Network");
-    }
+    getTranList(walletKey);
+  }, [walletKey, getTranList]);
+
+  useEffect(() => {
+    const handleStorage = () => {
+      setWalletKey(localStorage.getItem("walletKey"));
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
   return (
     <div className="live-block-container">
@@ -70,10 +75,10 @@ const LiveBlock = () => {
                     {transactionList.blockNumber}
                   </a>
                   <a
-                    href={`https://sepolia.etherscan.io/${newWallet}`}
+                    href={`https://sepolia.etherscan.io/${walletKey}`}
                     className="block-mine-address"
                   >
-                    {newWallet}
+                    {walletKey}
                   </a>
                 </div>
               ))}
@@ -87,43 +92,44 @@ const LiveBlock = () => {
           {tranSactionLists.length === 0
             ? "No Transaction Yet"
             : tranSactionLists.map((tranList) => (
-                <>
-                  <div className="blocks-details" key={tranList.blockNumber}>
-                    <div className="block-box">
-                      <img
-                        src={transactionImage}
-                        alt=""
-                        className="block-box-image"
-                      />
-                    </div>
-                    <a
-                      href={`https://sepolia.etherscan.io/block/${tranList.blockNumber}`}
-                      className="block-link"
-                    >
-                      {tranList.blockNumber}
-                    </a>
-                    <p></p>
-                    <div className="address-to-from">
-                      <p>From:</p>
-                      <a
-                        href={`https://sepolia.etherscan.io/address/${tranList.from}`}
-                        className="block-address"
-                      >
-                        {tranList.from}
-                      </a>
-                      <p>To:</p>
-                      <a
-                        href={`https://sepolia.etherscan.io/address/${tranList.to}`}
-                        className="block-address"
-                      >
-                        {tranList.to}
-                      </a>
-                    </div>
-                    <span className="amount">
-                      {ethers.utils.formatEther(tranList.value)}ETH
-                    </span>
+                <div
+                  className="blocks-details"
+                  key={tranList.hash || tranList.blockNumber}
+                >
+                  <div className="block-box">
+                    <img
+                      src={transactionImage}
+                      alt=""
+                      className="block-box-image"
+                    />
                   </div>
-                </>
+                  <a
+                    href={`https://sepolia.etherscan.io/block/${tranList.blockNumber}`}
+                    className="block-link"
+                  >
+                    {tranList.blockNumber}
+                  </a>
+                  <p></p>
+                  <div className="address-to-from">
+                    <p>From:</p>
+                    <a
+                      href={`https://sepolia.etherscan.io/address/${tranList.from}`}
+                      className="block-address"
+                    >
+                      {tranList.from}
+                    </a>
+                    <p>To:</p>
+                    <a
+                      href={`https://sepolia.etherscan.io/address/${tranList.to}`}
+                      className="block-address"
+                    >
+                      {tranList.to}
+                    </a>
+                  </div>
+                  <span className="amount">
+                    {ethers.utils.formatEther(tranList.value)}ETH
+                  </span>
+                </div>
               ))}
         </div>
       </div>
