@@ -5,11 +5,14 @@ import axios from "axios";
 import { TranSactionsContext } from "../../Context/WalletContext";
 import "./LiveBlock.css";
 import { ethers } from "ethers";
+import { useAccount } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 
 const LiveBlock = () => {
   const [tranSactionLists, setTranSactionLists] = useState([]);
-  const [walletKey, setWalletKey] = useState(localStorage.getItem("walletKey"));
-
+  // const [walletKey, setWalletKey] = useState(localStorage.getItem("walletKey"));
+  const { address } = useAccount();
+  const { user } = usePrivy();
   const getTranList = useCallback(async (wallet) => {
     if (!wallet) {
       setTranSactionLists([]);
@@ -37,18 +40,13 @@ const LiveBlock = () => {
   }, []);
 
   useEffect(() => {
-    getTranList(walletKey);
-  }, [walletKey, getTranList]);
+    if (user && address) {
+      getTranList(address);
+    } else {
+      setTranSactionLists([]);
+    }
+  }, [user, address, getTranList]);
 
-  useEffect(() => {
-    const handleStorage = () => {
-      setWalletKey(localStorage.getItem("walletKey"));
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
   return (
     <div className="live-block-container">
       <div className="blocks-transaction">
@@ -58,7 +56,9 @@ const LiveBlock = () => {
             <h5>Latest Blocks</h5>
           </div>
           <hr className="latest-block-hr" />
-          {tranSactionLists.length < 1
+          {!user || !address
+            ? "Connect your wallet to view blocks."
+            : tranSactionLists.length < 1
             ? "No Blocks Mined Yet"
             : tranSactionLists?.map((transactionList) => (
                 <div
@@ -75,10 +75,10 @@ const LiveBlock = () => {
                     {transactionList.blockNumber}
                   </a>
                   <a
-                    href={`https://sepolia.etherscan.io/${walletKey}`}
+                    href={`https://sepolia.etherscan.io/${address}`}
                     className="block-mine-address"
                   >
-                    {walletKey}
+                    {address}
                   </a>
                 </div>
               ))}
@@ -89,7 +89,9 @@ const LiveBlock = () => {
             <h5>Latest Transactions</h5>
           </div>
           <hr className="latest-block-hr" />
-          {tranSactionLists.length === 0
+          {!user || !address
+            ? "Connect your wallet to view transactions."
+            : tranSactionLists.length === 0
             ? "No Transaction Yet"
             : tranSactionLists.map((tranList) => (
                 <div

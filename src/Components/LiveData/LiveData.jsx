@@ -3,6 +3,8 @@ import transactionImage from "../../Assets/images/icon_transaction.png";
 import blockImage from "../../Assets/images/icon_block.png";
 import { WalletContext } from "../../Context/WalletContext";
 import axios from "axios";
+import { usePrivy } from "@privy-io/react-auth";
+import { useAccount } from "wagmi";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -28,7 +30,9 @@ ChartJS.register(
 
 const LiveData = () => {
   //let [wallet, setWallet] = useContext(WalletContext);
-  let newWallet = localStorage.getItem("walletKey");
+  // let newWallet = localStorage.getItem("walletKey");
+  const { address } = useAccount();
+  const { user } = usePrivy();
   //let [mainBalance, setBalance] = useContext(WalletContext);
   let [gasPrice, setGasPrice] = useState();
   let [ethLatestBlock, setEthLatestBlock] = useState("");
@@ -70,11 +74,12 @@ const LiveData = () => {
     //console.log(dec1);
     try {
       const data = await axios.get(
-        `https://api-sepolia.etherscan.io/api?module=stats&action=ethprice&apikey=${process.env.REACT_APP_API_KEY}`
+        `https://api.coingecko.com/api/v3/simple/price?x_cg_demo_api_key=${process.env.REACT_APP_COINGECKO_KEY}&vs_currencies=usd&ids=ethereum`
       );
-      let convertedPrice = data.data.result.ethusd;
+      let convertedPrice = data.data.ethereum.usd;
       //console.log(`${convertedPrice.toLocaleString()}`);
       setPrice(convertedPrice);
+      console.log(data);
       // setPrice(data.data.result.ethusd);
     } catch (e) {
       console.error(e);
@@ -125,9 +130,9 @@ const LiveData = () => {
     <>
       <div className="live-data-container">
         <div className="personal-details">
-          <h5 className="eth-price">ETH Price: {price}</h5>
+          <h5 className="eth-price">ETH Price: {user ? `${price}` : ""}</h5>
           <h5 className="wallet-top">
-            Address: {newWallet ? `${newWallet}` : "Wallet Not Connected"}
+            Address: {user ? `${address}` : "Wallet Not Connected"}
           </h5>
         </div>
         <div className="data-container">
@@ -157,7 +162,7 @@ const LiveData = () => {
               <div className="gas-fee">
                 <h5 className="title">WALLET ADDRESS</h5>
                 <p className="wallet-address">
-                  {newWallet ? `${newWallet}` : "Wallet not Connected"}
+                  {user ? `${address}` : "Wallet not Connected"}
                 </p>
               </div>
             </div>
